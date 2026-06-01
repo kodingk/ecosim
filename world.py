@@ -1,4 +1,4 @@
-import heapq
+import bisect
 import itertools
 from dataclasses import dataclass
 
@@ -15,32 +15,34 @@ class WorldSnapshot:
 
 class World:
     def __init__(self):
-        # level 기준 최소 힙. 동률 level에서 Entity끼리 비교되지 않도록 counter로 tie-break한다.
-        # 주의: level은 spawn 시점에 힙 키로 굳으므로, 런타임에 바뀌면 re-spawn해야 순서가 맞다.
-        self._heap: list[tuple[int, int, Entity]] = []
+        # level 오름차순으로 유지되는 리스트. spawn 때 bisect로 제자리에 끼워넣는다.
+        # 동률 level에서 Entity끼리 비교되지 않도록 counter로 tie-break(+ 삽입 순서 안정).
+        # 주의: level은 spawn 시 정렬 키로 굳으므로, 런타임에 바뀌면 re-spawn해야 순서가 맞다.
+        self._entities: list[tuple[int, int, Entity]] = []
         self._counter = itertools.count()
 
     @property
     def entities(self) -> list[Entity]:
         """
         모든 엔티티를 level 오름차순으로 반환하는 프로퍼티. (읽기 전용)
-        힙 복사본을 pop하며 추출하므로 낮은 level이 앞 — 순서대로 그리면 높은 level이 위에 온다.
+        이미 정렬돼 있어 매번 정렬하지 않고 추출만 한다 — 낮은 level이 앞.
         """
-        heap = list(self._heap)
-        return [heapq.heappop(heap)[2] for _ in range(len(heap))]
+        return [entity for _, _, entity in self._entities]
 
     def spawn(self, entity: Entity):
-        heapq.heappush(self._heap, (entity.status().level, next(self._counter), entity))
+        # 정렬을 유지하도록 level 위치에 삽입한다 (O(log n) 탐색 + O(n) 시프트).
+        bisect.insort(
+            self._entities, (entity.status().level, next(self._counter), entity)
+        )
 
     def despawn(self, entity: Entity):
-        # 힙에서 임의 원소 제거는 O(n): 걸러낸 뒤 다시 heapify한다.
-        self._heap = [item for item in self._heap if item[2] is not entity]
-        heapq.heapify(self._heap)
+        # 정렬 리스트에서 제거해도 나머지 순서는 유지된다 (O(n)).
+        self._entities = [item for item in self._entities if item[2] is not entity]
 
     def snapshot(self) -> WorldSnapshot:
         """현재 모든 엔티티의 상태를 떠 읽기 전용 스냅샷을 만든다."""
         return WorldSnapshot(
-            statuses={entity: entity.status() for _, _, entity in self._heap}
+            statuses={entity: entity.status() for _, _, entity in self._entities}
         )
 
     def update(self, dt: float):
@@ -53,7 +55,7 @@ class World:
         """
         snapshot = self.snapshot()
         actions: list[Action] = []
-        for _, _, entity in self._heap:
+        for _, _, entity in self._entities:
             for behavior in entity.behaviors():
                 action = behavior.plan(snapshot, dt)
                 if action is not None:

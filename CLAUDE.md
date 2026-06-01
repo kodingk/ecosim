@@ -33,11 +33,11 @@ ruff format .                 # 포매팅
 각 엔티티가 자기 위치·레벨을 소유하고 `status() -> EntityStatus(loc, level)`로 보고한다. **`World`는 위치를 저장하지 않는다.** `status()`는 스냅샷으로 한 틱 보관되므로 **매번 새 값(loc 복사본)** 을 반환해야 한다 — 반환 객체를 in-place로 변형하면 스냅샷이 오염된다.
 
 ### 책임 분리 (SRP)
-- **`World` = 모델**: 엔티티 보유 + `update`(시뮬레이션 진행). pygame을 import하지 않는다. 내부는 level 기준 최소 힙(`heapq`) + `entities`(힙에서 level 오름차순 추출, 읽기 전용) / `spawn`(heappush)·`despawn`(O(n) 제거 후 heapify) / `snapshot`.
+- **`World` = 모델**: 엔티티 보유 + `update`(시뮬레이션 진행). pygame을 import하지 않는다. 내부는 level 오름차순으로 유지되는 리스트(`bisect.insort`로 삽입) + `entities`(정렬 없이 추출만, 읽기 전용) / `spawn`(insort)·`despawn`(O(n) 제거) / `snapshot`.
 - **`Simulator` = 오케스트레이션 + 표현**: 루프·화면 소유, `render()`가 월드 상태를 읽어 그린다. **렌더링은 여기 있다 (World가 아님).**
 
 ### `level`은 우선순위가 아니라 렌더 레이어
-`level`이 클수록 **나중에 그려져 위에** 표시된다(예: 나는 익룡이 지상 개체 위로). `World.entities`가 **level 기반 최소 힙(`heapq`)** 에서 level 오름차순으로 추출해 반환하고(동률은 `counter`로 tie-break — `Entity`끼리 비교 안 되게), `Simulator.render()`는 그 순서대로 그리기만 한다. 처리/포식 우선순위가 **아니며** update 순서는 level과 무관하다(update는 2단계라 순서 독립). 참고 ①: level은 사실상 렌더 전용 속성이라 이 정렬을 `World`에 둔 것은 약한 결합 — 의도된 선택. 참고 ②: level은 **spawn 시 힙 키로 고정**되므로, 런타임에 level이 바뀌면 `despawn` 후 재`spawn`해야 순서가 유지된다.
+`level`이 클수록 **나중에 그려져 위에** 표시된다(예: 나는 익룡이 지상 개체 위로). `World.entities`는 **level 오름차순으로 유지되는 리스트**(spawn 때 `bisect.insort`로 제자리 삽입)라 정렬 없이 그대로 추출해 반환하고(동률은 `counter`로 tie-break — `Entity`끼리 비교 안 되게), `Simulator.render()`는 그 순서대로 그리기만 한다. 처리/포식 우선순위가 **아니며** update 순서는 level과 무관하다(update는 2단계라 순서 독립). 참고 ①: level은 사실상 렌더 전용 속성이라 이 정렬을 `World`에 둔 것은 약한 결합 — 의도된 선택. 참고 ②: level은 **spawn 시 정렬 키로 고정**되므로, 런타임에 level이 바뀌면 `despawn` 후 재`spawn`해야 순서가 유지된다.
 
 ### 확장 지점
 - **새 생물**: `Entity` 하위 클래스 (`dinosaur/base.py`의 `Dinosaur` 스텁이 출발점). `behaviors()`·`status()`·`sprite()` 구현.
