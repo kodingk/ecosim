@@ -6,11 +6,12 @@ from world import World
 class Simulator:
     def __init__(self):
         pygame.init()
-        self.world = World()
+        self.size = (800, 600)
+        self.world = World(size=self.size)
         self.running = False
         self.fps = 60
         self.clock = pygame.time.Clock()
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode(self.size)
         pygame.display.set_caption("백악기 시뮬레이터")
 
     def run(self):

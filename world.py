@@ -12,9 +12,26 @@ class WorldSnapshot:
 
     statuses: dict[Entity, EntityStatus]
 
+    def query_entities_within(self, actor: Entity, distance: float) -> list[Entity]:
+        """
+        actor의 틱-시작 위치 기준 distance 이내의 다른 엔티티를 가까운 순으로 반환한다.
+        위치는 스냅샷(틱 시작)을 쓰므로 처리 순서에 결과가 좌우되지 않는다.
+        """
+        origin = self.statuses[actor].loc
+        found = []
+        for entity, status in self.statuses.items():
+            if entity is actor:
+                continue
+            d = origin.distance_to(status.loc)
+            if d <= distance:
+                found.append((d, entity))
+        found.sort(key=lambda item: item[0])  # 가까운 순 (동률은 안정 정렬로 결정적)
+        return [entity for _, entity in found]
+
 
 class World:
-    def __init__(self):
+    def __init__(self, size: tuple[int, int] = (800, 600)):
+        self.size = size  # 시뮬레이션 공간 범위 (width, height) — 이동 클램프 등에 사용
         # level 오름차순으로 유지되는 리스트. spawn 때 bisect로 제자리에 끼워넣는다.
         # 동률 level에서 Entity끼리 비교되지 않도록 counter로 tie-break(+ 삽입 순서 안정).
         # 주의: level은 spawn 시 정렬 키로 굳으므로, 런타임에 바뀌면 re-spawn해야 순서가 맞다.
