@@ -5,7 +5,7 @@ from action import Action
 if TYPE_CHECKING:
     from dinosaur.base import Dinosaur
     from entity import Entity
-    from world import World
+    from world import World, WorldSnapshot
 
 
 class Consume(Action):
@@ -21,6 +21,15 @@ class Consume(Action):
         self._actor = actor
         self._target = target
         self._gain = gain
+
+    def claim(self) -> "Entity":
+        return self._target
+
+    def contest_key(self, snapshot: "WorldSnapshot") -> float:
+        # '가까운 포식자 우선': 틱-시작 기준 포식자와 먹이 사이 거리가 작을수록 이긴다.
+        actor_loc = snapshot.statuses[self._actor].loc
+        target_loc = snapshot.statuses[self._target].loc
+        return actor_loc.distance_to(target_loc)
 
     def apply(self, world: "World") -> None:
         if self._target not in world.entities:

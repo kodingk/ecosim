@@ -30,8 +30,14 @@ class Dinosaur(Entity):
     def behaviors(self) -> list["Behavior"]:
         return []
 
+    @property
     def status(self) -> EntityStatus:
         return EntityStatus(loc=pygame.Vector2(self.loc), level=self.level)
+
+    @status.setter
+    def status(self, value: EntityStatus) -> None:
+        self.loc = value.loc
+        self.level = value.level
 
     def sprite(self) -> pygame.Surface:
         surface = pygame.Surface((self.size, self.size))

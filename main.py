@@ -2,6 +2,7 @@ import random
 
 import pygame
 
+from dinosaur.deinonychus import Deinonychus
 from dinosaur.psittacosaurus import Psittacosaurus
 from plant.base import Plant
 from simulator import Simulator
@@ -20,5 +21,9 @@ if __name__ == "__main__":
     for _ in range(8):
         loc = pygame.Vector2(master.uniform(0, width), master.uniform(0, height))
         simulator.world.spawn(Psittacosaurus(loc, random.Random(master.random())))
+
+    for _ in range(3):
+        loc = pygame.Vector2(master.uniform(0, width), master.uniform(0, height))
+        simulator.world.spawn(Deinonychus(loc, random.Random(master.random())))
 
     simulator.run()

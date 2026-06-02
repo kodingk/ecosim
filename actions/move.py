@@ -16,10 +16,14 @@ class Move(Action):
         self.entity = entity
         self.displacement = pygame.Vector2(displacement)
 
-    def apply(self, world: "World") -> None:
-        width, height = world.size
-        status = self.entity.status()
+    def _get_clamped_loc(self, width: int, height: int) -> pygame.Vector2:
+        status = self.entity.status
         loc = status.loc + self.displacement
         loc.x = max(0.0, min(loc.x, float(width)))
         loc.y = max(0.0, min(loc.y, float(height)))
-        self.entity.loc = loc
+        return loc
+
+    def apply(self, world: "World") -> None:
+        width, height = world.size
+        loc = self._get_clamped_loc(width, height)
+        self.entity.set_location(loc)

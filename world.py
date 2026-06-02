@@ -68,7 +68,7 @@ class World:
 
         1) 판단: 모든 엔티티가 동일한 틱-시작 스냅샷을 보고 Action을 계산한다.
            월드를 변경하지 않으므로 처리 순서에 결과가 좌우되지 않는다.
-        2) 적용: 계산된 Action들을 월드에 반영한다.
+        2) 적용: 충돌(같은 대상 독점)을 해결한 뒤 Action들을 월드에 반영한다.
         """
         snapshot = self.snapshot()
         actions: list[Action] = []
@@ -78,5 +78,22 @@ class World:
                 if action is not None:
                     actions.append(action)
                     break
-        for action in actions:
+        for action in self._resolve(actions, snapshot):
             action.apply(self)
+
+    def _resolve(self, actions: list[Action], snapshot: WorldSnapshot) -> list[Action]:
+        """
+        충돌 해결 훅: 같은 대상을 독점(claim)하려는 액션이 여럿이면 단 하나만 남긴다.
+        승자는 contest_key 최소값 — Consume의 경우 '가까운 포식자 우선'. 동률은 수집
+        순서(= 정렬 순서)로 안정적으로 결정한다. claim이 없는 액션은 그대로 통과한다.
+        """
+        by_claim: dict[Entity, list[Action]] = {}
+        for action in actions:
+            target = action.claim()
+            if target is not None:
+                by_claim.setdefault(target, []).append(action)
+        winners = {
+            min(claimers, key=lambda a: a.contest_key(snapshot))
+            for claimers in by_claim.values()
+        }
+        return [a for a in actions if a.claim() is None or a in winners]
