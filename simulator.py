@@ -31,11 +31,10 @@ class Simulator:
         """
         월드의 현재 상태를 화면에 그리는 함수. (렌더링은 Simulator의 책임)
         World.entities가 level 오름차순이라, 순서대로 그리면 높은 level이 위에 온다.
-        위치의 정본은 각 엔티티의 status()다.
+        위치의 정본은 각 엔티티의 status.loc다.
         """
         self.screen.fill((0, 0, 0))
         for entity in self.world.entities:
-            status = entity.status()
             sprite = entity.sprite()
-            self.screen.blit(sprite, sprite.get_rect(center=status.loc))
+            self.screen.blit(sprite, sprite.get_rect(center=entity.status.loc))
         pygame.display.flip()
