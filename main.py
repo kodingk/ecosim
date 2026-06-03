@@ -12,10 +12,11 @@ if __name__ == "__main__":
     master = random.Random(42)
     size = simulator.world.size
 
-    for _ in range(40):
+    # 초기 개체수는 안정 공존이 검증된 수용력 근처 값(헤드리스 5/5 시드).
+    for _ in range(120):
         simulator.world.spawn(Plant.gen(size, random.Random(master.random())))
 
-    for _ in range(8):
+    for _ in range(40):
         simulator.world.spawn(Psittacosaurus.gen(size, random.Random(master.random())))
 
     for _ in range(3):

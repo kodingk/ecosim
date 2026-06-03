@@ -49,7 +49,7 @@ class World:
     def spawn(self, entity: Entity):
         # 정렬을 유지하도록 level 위치에 삽입한다 (O(log n) 탐색 + O(n) 시프트).
         bisect.insort(
-            self._entities, (entity.status().level, next(self._counter), entity)
+            self._entities, (entity.status.level, next(self._counter), entity)
         )
 
     def despawn(self, entity: Entity):
@@ -59,7 +59,7 @@ class World:
     def snapshot(self) -> WorldSnapshot:
         """현재 모든 엔티티의 상태를 떠 읽기 전용 스냅샷을 만든다."""
         return WorldSnapshot(
-            statuses={entity: entity.status() for _, _, entity in self._entities}
+            statuses={entity: entity.status for _, _, entity in self._entities}
         )
 
     def update(self, dt: float):
@@ -72,6 +72,12 @@ class World:
         """
         snapshot = self.snapshot()
         actions: list[Action] = []
+
+        # passive: 항상 수집 (에너지 소모 등) — behavior 선택과 독립
+        for _, _, entity in self._entities:
+            actions.extend(entity.passive_actions(dt))
+
+        # active: 엔티티당 첫 non-None 하나
         for _, _, entity in self._entities:
             for behavior in entity.behaviors():
                 action = behavior.plan(snapshot, dt)

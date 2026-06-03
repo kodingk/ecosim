@@ -1,10 +1,15 @@
 import abc
+import dataclasses
 import random
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import pygame
 
 from behavior import Behavior
+
+if TYPE_CHECKING:
+    from action import Action
 
 
 @dataclass(frozen=True)
@@ -16,12 +21,7 @@ class EntityStatus:
     """엔티티의 그리기 레이어. 값이 클수록 다른 엔티티 위에 그려진다 (예: 익룡)."""
 
     def replace(self, **kwargs) -> "EntityStatus":
-        """
-        해당 엔티티의 상태를 갱신하는 함수.
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        return self
+        return dataclasses.replace(self, **kwargs)
 
 
 class Entity(abc.ABC):
@@ -65,6 +65,10 @@ class Entity(abc.ABC):
         주어진 월드 크기 안에서 랜덤하게 초기화된 엔티티 인스턴스를 반환하는 함수.
         초기 조건 설정(Simulator 스폰)에 사용된다.
         """
+
+    def passive_actions(self, dt: float) -> list["Action"]:
+        """매 틱 항상 수집되는 수동 행동들 (에너지 소모·노화 등). 기본값은 빈 리스트."""
+        return []
 
     # ================================================================================
     # Derived
