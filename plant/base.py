@@ -1,3 +1,4 @@
+import random
 from typing import TYPE_CHECKING
 
 import pygame
@@ -33,3 +34,10 @@ class Plant(Entity):
         surface = pygame.Surface((self.size, self.size))
         surface.fill(self.color)
         return surface
+
+    @classmethod
+    def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Plant":
+        loc = pygame.Vector2(
+            rng.uniform(0, world_size[0]), rng.uniform(0, world_size[1])
+        )
+        return cls(loc)

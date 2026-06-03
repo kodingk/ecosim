@@ -1,4 +1,5 @@
 import abc
+import random
 from dataclasses import dataclass
 
 import pygame
@@ -59,7 +60,7 @@ class Entity(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def gen(cls, world_size: tuple[int, int]) -> "Entity":
+    def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Entity":
         """
         주어진 월드 크기 안에서 랜덤하게 초기화된 엔티티 인스턴스를 반환하는 함수.
         초기 조건 설정(Simulator 스폰)에 사용된다.

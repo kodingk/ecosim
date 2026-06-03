@@ -1,5 +1,6 @@
 import random
 
+import pygame
 from behaviors.hunt import Hunt
 from behaviors.wander import Wander
 from dinosaur.base import Dinosaur
@@ -34,3 +35,10 @@ class Deinonychus(Dinosaur):
 
     def behaviors(self):
         return self._behaviors
+
+    @classmethod
+    def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Deinonychus":
+        loc = pygame.Vector2(
+            rng.uniform(0, world_size[0]), rng.uniform(0, world_size[1])
+        )
+        return cls(loc, rng)
