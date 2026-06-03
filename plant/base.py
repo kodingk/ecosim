@@ -32,9 +32,7 @@ class Plant(Entity):
     spread_radius: float = 150.0  # 넓은 반경으로 지역 고갈 완화
     max_plants: int = 150  # 월드 내 식물 개체 상한
     max_biomass: float = 20.0  # 포기당 최대 현존량(= 초식자가 뜯어갈 수 있는 에너지)
-    regrow_rate: float = (
-        1.0  # biomass/초 회복 — 초식자 부양력(carrying capacity)을 결정
-    )
+    regrow_rate: float = 1.3  # biomass/초 회복 — 초식자(psitta+익룡) 부양력 결정
     spread_min_biomass: float = 10.0  # 이 이상 건강할 때만 번식(과방목 시 확산 정지)
 
     def __init__(

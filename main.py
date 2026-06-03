@@ -2,6 +2,7 @@ import random
 
 from dinosaur.deinonychus import Deinonychus
 from dinosaur.psittacosaurus import Psittacosaurus
+from dinosaur.pteranodon import Pteranodon
 from plant.base import Plant
 from simulator import Simulator
 
@@ -21,5 +22,8 @@ if __name__ == "__main__":
 
     for _ in range(3):
         simulator.world.spawn(Deinonychus.gen(size, random.Random(master.random())))
+
+    for _ in range(12):
+        simulator.world.spawn(Pteranodon.gen(size, random.Random(master.random())))
 
     simulator.run()
