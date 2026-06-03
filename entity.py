@@ -1,7 +1,7 @@
 import abc
 import dataclasses
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import pygame
@@ -19,6 +19,9 @@ class EntityStatus:
 
     level: int
     """엔티티의 그리기 레이어. 값이 클수록 다른 엔티티 위에 그려진다 (예: 익룡)."""
+
+    velocity: pygame.Vector2 = field(default_factory=lambda: pygame.Vector2(0, 0))
+    """직전 틱의 이동 변위(방향+크기). boids 정렬·요격 등에 쓰인다. 정지·식물은 0."""
 
     def replace(self, **kwargs) -> "EntityStatus":
         return dataclasses.replace(self, **kwargs)
@@ -78,6 +81,10 @@ class Entity(abc.ABC):
         """
         해당 엔티티의 위치를 설정하는 함수.
         pygame.Vector2를 받아 엔티티의 위치를 갱신한다.
+
+        이동 변위(loc - 직전 loc)를 velocity로 기록해 status가 보고하게 한다 — boids
+        정렬에 쓰인다. 안 움직이는 엔티티(식물)는 이 함수가 불리지 않아 velocity가 0이다.
         """
+        self.velocity = loc - self.status.loc
         self.status = self.status.replace(loc=loc)
         return self

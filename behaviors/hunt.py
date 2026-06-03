@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+import pygame
+
 from actions.consume import Consume
 from actions.move import Move
 from behavior import Behavior
@@ -39,6 +41,7 @@ class Hunt(Behavior):
         hunt_hunger: float | None = None,
         max_chase: float = 8.0,
         rest_duration: float = 3.0,
+        pack_radius: float = 0.0,
     ):
         self._actor = actor
         self._target_classes = tuple(target_classes)
@@ -50,6 +53,9 @@ class Hunt(Behavior):
         self._hunt_hunger = hunt_hunger
         self._max_chase = max_chase
         self._rest_duration = rest_duration
+        # >0이면 '협동 사냥': 이 반경 내 동족(팩)의 무게중심에 가장 가까운 먹이를 공유 표적으로
+        # 삼는다 → 팩원들이 같은 먹이에 수렴해 도주 prey를 자연 포위한다. 0이면 단독(최근접).
+        self._pack_radius = pack_radius
         self._chase_time = 0.0
         self._rest_time = 0.0
 
@@ -68,18 +74,31 @@ class Hunt(Behavior):
         if self._actor.energy >= satiation:
             self._chase_time = 0.0
             return None
-        prey = next(
-            (
-                entity
-                for entity in snapshot.query_entities_within(self._actor, self._sight)
-                if isinstance(entity, self._target_classes)
-            ),
-            None,
-        )
-        if prey is None:
+        actor_loc = snapshot.statuses[self._actor].loc
+        prey_in_sight = [
+            e
+            for e in snapshot.query_entities_within(self._actor, self._sight)
+            if isinstance(e, self._target_classes)
+        ]
+        if not prey_in_sight:
             self._chase_time = 0.0  # 사냥감 없음 → 추격 리셋
             return None
-        actor_loc = snapshot.statuses[self._actor].loc
+        if self._pack_radius > 0.0:
+            # 팩 무게중심(자신 + 반경 내 동족)에 가장 가까운 먹이를 공유 표적으로 삼는다 →
+            # 팩원들이 같은 먹이에 수렴해 도주 prey를 자연 포위한다.
+            center = pygame.Vector2(actor_loc)
+            count = 1
+            for e in snapshot.query_entities_within(self._actor, self._pack_radius):
+                if type(e) is type(self._actor):
+                    center += snapshot.statuses[e].loc
+                    count += 1
+            center /= count
+            prey = min(
+                prey_in_sight,
+                key=lambda p: center.distance_to(snapshot.statuses[p].loc),
+            )
+        else:
+            prey = prey_in_sight[0]  # 단독: 자기 기준 최근접(query가 가까운 순)
         prey_loc = snapshot.statuses[prey].loc
         if actor_loc.distance_to(prey_loc) <= self._attack_distance:
             self._chase_time = 0.0  # 포획 성공 → 리셋

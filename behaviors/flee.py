@@ -29,6 +29,9 @@ class Flee(Behavior):
         predator_classes: type["Entity"] | tuple[type["Entity"], ...],
         flee_radius: float,
         speed: float,
+        vigilance_radius: float = 0.0,
+        vigilance_bonus: float = 0.0,
+        vigilance_cap: int = 0,
     ):
         self._actor = actor
         self._predator_classes = (
@@ -38,11 +41,26 @@ class Flee(Behavior):
         )
         self._flee_radius = flee_radius
         self._speed = speed
+        # 집단 경계(many-eyes): vigilance_radius 내 동족 1마리당 감지 반경 +vigilance_bonus,
+        # 최대 vigilance_cap마리까지. 무리가 클수록 포식자를 일찍 감지해 도주 → 무리가 보호가 된다.
+        self._vigilance_radius = vigilance_radius
+        self._vigilance_bonus = vigilance_bonus
+        self._vigilance_cap = vigilance_cap
 
     def plan(self, snapshot: "WorldSnapshot", dt: float) -> "Action | None":
         actor_loc = snapshot.statuses[self._actor].loc
+        radius = self._flee_radius
+        if self._vigilance_bonus > 0:
+            kin = sum(
+                1
+                for e in snapshot.query_entities_within(
+                    self._actor, self._vigilance_radius
+                )
+                if type(e) is type(self._actor)
+            )
+            radius += self._vigilance_bonus * min(kin, self._vigilance_cap)
         # query는 가까운 순 — 첫 포식자가 가장 가깝다.
-        for entity in snapshot.query_entities_within(self._actor, self._flee_radius):
+        for entity in snapshot.query_entities_within(self._actor, radius):
             if isinstance(entity, self._predator_classes):
                 pred_loc = snapshot.statuses[entity].loc
                 away = actor_loc - pred_loc

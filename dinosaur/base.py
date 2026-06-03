@@ -35,6 +35,7 @@ class Dinosaur(Entity):
 
     def __init__(self, loc: pygame.Vector2, rng: random.Random | None = None):
         self.loc = pygame.Vector2(loc)
+        self.velocity = pygame.Vector2(0, 0)  # 직전 틱 이동 변위(set_location이 갱신). boids 정렬용.
         self.energy = self.max_energy / 2  # 절반에서 시작(처음엔 배고픔)
         self.age = 0.0
         self.last_breed_age = -1.0e9  # 마지막 번식 시점(나이). 번식 쿨다운 계산용.
@@ -51,7 +52,11 @@ class Dinosaur(Entity):
 
     @property
     def status(self) -> EntityStatus:
-        return EntityStatus(loc=pygame.Vector2(self.loc), level=self.level)
+        return EntityStatus(
+            loc=pygame.Vector2(self.loc),
+            level=self.level,
+            velocity=pygame.Vector2(self.velocity),
+        )
 
     @status.setter
     def status(self, value: EntityStatus) -> None:

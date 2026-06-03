@@ -24,6 +24,7 @@ class Deinonychus(Dinosaur):
     hunt_hunger = 70.0  # 에너지가 이 값 이상이면 사냥 안 함(포만 → 개체당 포식률 상한)
     max_chase = 8.0  # 이 시간 동안 못 잡으면 지쳐 포기(피식자 탈출 창 보장)
     rest_duration = 3.0  # 포기 후 휴식 시간
+    pack_radius = 0.0  # 0=솔로 사냥(검증된 안정 공존). >0이면 협동 사냥(무리와 함께 쓰면 재조정 필요)
     # 생활사: K-전략(늦게 성숙·긴 수명)
     maturity_age = 25.0
     senescence_age = 160.0
@@ -52,6 +53,7 @@ class Deinonychus(Dinosaur):
                 hunt_hunger=self.hunt_hunger,
                 max_chase=self.max_chase,
                 rest_duration=self.rest_duration,
+                pack_radius=self.pack_radius,  # 협동 사냥(공유 표적)
             ),
             Reproduce(
                 self,
