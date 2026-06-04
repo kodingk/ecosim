@@ -77,15 +77,12 @@ class Reproduce(Behavior):
         # 개체수 상한 — 이미 max_own_count마리 이상이면 번식하지 않는다.
         # 비율 기반 체크보다 확실하게 과폭발(overshoot)을 막는다.
         if self._max_own_count > 0:
-            own = sum(1 for e in snapshot.statuses if type(e) is type(self._actor))
-            if own >= self._max_own_count:
+            if snapshot.count_exact(type(self._actor)) >= self._max_own_count:
                 return None
         # 밀도 의존 번식 억제: food/pop 비율이 min_food_ratio 미만이면 번식하지 않는다.
         if self._food_class and self._min_food_ratio > 0:
-            food = sum(1 for e in snapshot.statuses if isinstance(e, self._food_class))
-            pop = max(
-                1, sum(1 for e in snapshot.statuses if type(e) is type(self._actor))
-            )
+            food = snapshot.count(self._food_class)
+            pop = max(1, snapshot.count_exact(type(self._actor)))
             if food / pop < self._min_food_ratio:
                 return None
         loc = snapshot.statuses[self._actor].loc

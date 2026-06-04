@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from action import Action
 from entity import Entity, EntityStatus
+from spatial import SpatialGrid
 
 
 @dataclass(frozen=True)
@@ -11,18 +12,43 @@ class WorldSnapshot:
     """틱-시작 시점의 모든 엔티티 상태를 담은 읽기 전용 뷰."""
 
     statuses: dict[Entity, EntityStatus]
+    cell_size: float = 100.0  # 공간 해시 격자 칸 크기(이웃 쿼리 가속)
+
+    def __post_init__(self) -> None:
+        # 틱-시작 위치로 공간 해시를, 동시에 타입별 개수를 1회 빌드한다 — 이웃 쿼리와 전역
+        # 개수 조회를 둘 다 O(n)→평균 O(1)로. frozen이라 object.__setattr__로 파생 가속
+        # 구조를 심는다(불변 계약 유지).
+        grid = SpatialGrid(self.cell_size)
+        counts: dict[type, int] = {}
+        for entity, status in self.statuses.items():
+            grid.insert(entity, status.loc)
+            t = type(entity)
+            counts[t] = counts.get(t, 0) + 1
+        object.__setattr__(self, "_grid", grid)
+        object.__setattr__(self, "_counts", counts)
+
+    def count(self, cls: type) -> int:
+        """cls(및 하위 클래스) 인스턴스 수 — isinstance 의미. 캐시로 O(타입 수)≈O(1)."""
+        return sum(n for t, n in self._counts.items() if issubclass(t, cls))
+
+    def count_exact(self, cls: type) -> int:
+        """정확히 cls 타입인 인스턴스 수(하위 클래스 제외)."""
+        return self._counts.get(cls, 0)
 
     def query_entities_within(self, actor: Entity, distance: float) -> list[Entity]:
         """
         actor의 틱-시작 위치 기준 distance 이내의 다른 엔티티를 가까운 순으로 반환한다.
         위치는 스냅샷(틱 시작)을 쓰므로 처리 순서에 결과가 좌우되지 않는다.
+
+        공간 해시로 후보를 인근 격자 칸으로 좁힌 뒤 정확 거리로 거른다 — 모든 엔티티를
+        훑던 O(n)을 평균 O(1)로 줄인다(결과 집합·순서는 전수 검사와 동일).
         """
         origin = self.statuses[actor].loc
         found = []
-        for entity, status in self.statuses.items():
+        for entity in self._grid.nearby(origin, distance):
             if entity is actor:
                 continue
-            d = origin.distance_to(status.loc)
+            d = origin.distance_to(self.statuses[entity].loc)
             if d <= distance:
                 found.append((d, entity))
         found.sort(key=lambda item: item[0])  # 가까운 순 (동률은 안정 정렬로 결정적)

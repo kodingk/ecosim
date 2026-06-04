@@ -47,10 +47,7 @@ class Spread(Behavior):
         # 뜯겨서 약해진 식물은 번식하지 않는다 — 과방목된 초지는 확산을 멈춘다(음성 피드백).
         if getattr(self._plant, "biomass", float("inf")) < self._min_biomass:
             return None
-        plant_count = sum(
-            1 for e in snapshot.statuses if isinstance(e, self._plant_class)
-        )
-        if plant_count >= self._max_plants:
+        if snapshot.count(self._plant_class) >= self._max_plants:
             return None
         if self._rng.random() >= self._rate * dt:
             return None
