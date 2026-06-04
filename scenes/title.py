@@ -1,5 +1,6 @@
 import pygame
 
+from keybindings import KeyBindings
 from scene import Scene
 
 
@@ -19,15 +20,18 @@ class TitleScene(Scene):
         self._title_font = pygame.font.Font(None, 76)
         self._font = pygame.font.Font(None, 30)
         self._small = pygame.font.Font(None, 22)
+        self._keys = KeyBindings()
+        self._keys.bind(pygame.K_RETURN, "start", self._start)
+        self._keys.bind(pygame.K_SPACE, "start", self._start)
+        self._keys.bind(pygame.K_ESCAPE, "quit", self._app.quit)
+
+    def _start(self) -> None:
+        from scenes.simulation import SimulationScene
+
+        self._app.switch(SimulationScene(self._app))
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                from scenes.simulation import SimulationScene
-
-                self._app.switch(SimulationScene(self._app))
-            elif event.key == pygame.K_ESCAPE:
-                self._app.quit()
+        self._keys.handle(event)
 
     def update(self, dt: float) -> None:
         pass
