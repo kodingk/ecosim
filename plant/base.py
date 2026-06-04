@@ -74,13 +74,20 @@ class Plant(Entity):
         self._loc = value.loc
 
     def sprite(self) -> pygame.Surface:
-        # 뜯긴 정도를 시각화: biomass 비율로 크기·채도를 줄인다(과방목된 풀은 작고 어둡다).
-        frac = max(0.15, self.biomass / self.max_biomass)
-        s = max(2, int(self.size * frac))
-        surface = pygame.Surface((s, s))
+        # 풀 포기(잎 다발) — biomass 비율로 크기·밝기가 변한다(과방목된 풀은 작고 어둡다).
+        frac = max(0.2, self.biomass / self.max_biomass)
+        s = max(3, int(self.size * 1.5 * frac))
+        surf = pygame.Surface((s, s), pygame.SRCALPHA)
         r, g, b = self.color
-        surface.fill((int(r * frac), int(g * frac), int(b * frac)))
-        return surface
+        m = 0.5 + 0.5 * frac
+        bright = (int(r * m), int(g * m), int(b * m))
+        dark = (int(bright[0] * 0.6), int(bright[1] * 0.6), int(bright[2] * 0.6))
+        base = (s // 2, s - 1)
+        th = max(1, s // 4)
+        pygame.draw.line(surf, dark, base, (0, 1), th)  # 왼 잎
+        pygame.draw.line(surf, bright, base, (s // 2, 0), th)  # 가운데 잎
+        pygame.draw.line(surf, dark, base, (s - 1, 1), th)  # 오른 잎
+        return surf
 
     @classmethod
     def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Plant":

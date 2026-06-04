@@ -80,15 +80,21 @@ class Pteranodon(Dinosaur):
         return self._behaviors
 
     def sprite(self) -> pygame.Surface:
-        # 갈매기형 날개 실루엣 — 나는 느낌. 미성숙은 작게(나이 비례).
+        # 전진(+x) 방향 갈매기 실루엣 — 두 날개가 뒤로 젖혀진 형태. velocity로 회전해 난다.
         frac = min(1.0, 0.4 + 0.6 * (self.age / self.maturity_age))
-        w = max(6, int(self.size * 2 * frac))
-        h = max(3, int(self.size * frac))
-        surface = pygame.Surface((w, h), pygame.SRCALPHA)
-        # 좌끝 → 위중앙 → 우끝 → 아래중앙(살짝 꺾인 W) 폴리곤
+        ln = max(6, int(self.size * 1.8 * frac))  # 앞뒤 길이
+        sw = max(5, int(self.size * 1.4 * frac))  # 날개 폭(반)
+        body = self.color
+        dark = (int(body[0] * 0.6), int(body[1] * 0.6), int(body[2] * 0.6))
+        surf = pygame.Surface((ln, 2 * sw), pygame.SRCALPHA)
+        cy = sw
+        # 앞쪽 머리(오른쪽) → 양 날개가 뒤(왼쪽)로 젖혀진 화살형 + 가운데 노치
         pygame.draw.polygon(
-            surface,
-            self.color,
-            [(0, h - 1), (w // 2, 0), (w - 1, h - 1), (w // 2, h // 2)],
+            surf,
+            body,
+            [(ln - 1, cy), (0, 0), (int(ln * 0.45), cy), (0, 2 * sw - 1)],
         )
-        return surface
+        pygame.draw.line(surf, dark, (int(ln * 0.45), cy), (ln - 1, cy), 1)  # 몸통선
+        if self.velocity.length_squared() > 0.01:
+            surf = pygame.transform.rotate(surf, -self.velocity.as_polar()[1])
+        return surf
