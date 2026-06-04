@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 import pygame
 
+import sprites
 from actions.regrow import Regrow
 from behaviors.spread import Spread
 from entity import Entity, EntityStatus
@@ -74,20 +75,10 @@ class Plant(Entity):
         self._loc = value.loc
 
     def sprite(self) -> pygame.Surface:
-        # 풀 포기(잎 다발) — biomass 비율로 크기·밝기가 변한다(과방목된 풀은 작고 어둡다).
-        frac = max(0.2, self.biomass / self.max_biomass)
-        s = max(3, int(self.size * 1.5 * frac))
-        surf = pygame.Surface((s, s), pygame.SRCALPHA)
-        r, g, b = self.color
-        m = 0.5 + 0.5 * frac
-        bright = (int(r * m), int(g * m), int(b * m))
-        dark = (int(bright[0] * 0.6), int(bright[1] * 0.6), int(bright[2] * 0.6))
-        base = (s // 2, s - 1)
-        th = max(1, s // 4)
-        pygame.draw.line(surf, dark, base, (0, 1), th)  # 왼 잎
-        pygame.draw.line(surf, bright, base, (s // 2, 0), th)  # 가운데 잎
-        pygame.draw.line(surf, dark, base, (s - 1, 1), th)  # 오른 잎
-        return surf
+        # 에셋 식물 — biomass 비율로 크기·명도가 변한다(과방목된 풀은 작고 어둡다).
+        frac = max(0.25, self.biomass / self.max_biomass)
+        px = int(self.size * frac * 2.8)
+        return sprites.sprite("plant", px, bright=0.5 + 0.5 * frac)
 
     @classmethod
     def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Plant":

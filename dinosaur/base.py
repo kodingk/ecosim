@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 import pygame
 
+import sprites
 from actions.age import Age
 from actions.drain_energy import DrainEnergy
 from entity import Entity, EntityStatus
@@ -26,6 +27,7 @@ class Dinosaur(Entity):
     color: tuple[int, int, int] = (200, 200, 200)
     size: int = 14
     level: int = 1  # 식물(0) 위에 그려진다
+    sprite_name: str = "psittacosaurus"  # assets/sprites/{sprite_name}.png
     max_energy: float = 100.0
     drain_rate: float = 5.0  # 에너지/초
     # 생활사 — 나이 기반
@@ -66,33 +68,17 @@ class Dinosaur(Entity):
         self.level = value.level
 
     def sprite(self) -> pygame.Surface:
-        # 미성숙 개체는 작게 — 나이에 따라 크기가 자란다(0.4→1.0배).
+        # 에셋 스프라이트를 나이 비례 크기로, velocity 방향으로 회전해 그린다.
         if self.maturity_age > 0:
             frac = min(1.0, 0.4 + 0.6 * (self.age / self.maturity_age))
         else:
             frac = 1.0
-        s = max(4, int(self.size * frac))
-        body = self.color
-        dark = (int(body[0] * 0.55), int(body[1] * 0.55), int(body[2] * 0.55))
-        # 오른쪽(+x)을 향한 생물 실루엣을 그린 뒤 velocity 방향으로 회전한다.
-        surf = pygame.Surface((3 * s, 2 * s), pygame.SRCALPHA)
-        cx, cy = (3 * s) // 2, s
-        # 꼬리(뒤쪽 삼각) → 몸통(가로 타원) → 머리(앞쪽 원) → 눈
-        pygame.draw.polygon(
-            surf,
-            body,
-            [(cx - s, cy - s // 4), (cx - s, cy + s // 4), (cx - 3 * s // 2, cy)],
-        )
-        pygame.draw.ellipse(surf, body, (cx - s, cy - s // 2, 2 * s, s))
-        pygame.draw.ellipse(surf, dark, (cx - s, cy - s // 2, 2 * s, s), 1)
-        hr = max(2, s // 2)
-        pygame.draw.circle(surf, body, (cx + s - hr // 2, cy), hr)
-        pygame.draw.circle(surf, dark, (cx + s - hr // 2, cy), hr, 1)
-        er = max(1, s // 6)
-        pygame.draw.circle(surf, (25, 20, 20), (cx + s, cy - er), er)
+        px = int(self.size * frac * 2.9)
         if self.velocity.length_squared() > 0.01:
-            surf = pygame.transform.rotate(surf, -self.velocity.as_polar()[1])
-        return surf
+            angle = -self.velocity.as_polar()[1]
+        else:
+            angle = 0.0
+        return sprites.sprite(self.sprite_name, px, angle)
 
     @classmethod
     def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Dinosaur":

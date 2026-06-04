@@ -13,6 +13,7 @@ class Deinonychus(Dinosaur):
     color = (170, 70, 60)
     size = 14
     level = 2  # 초식(1) 위에 그려져 시각적으로 구분
+    sprite_name = "deinonychus"
     max_energy = 130.0  # 큰 에너지 reserve — 먹이 저점(prey trough)을 버틴다
     drain_rate = (
         2.5  # 저대사 — 포식 압력↓ + 기근 생존(130/2.5≈52초)으로 trough를 넘긴다

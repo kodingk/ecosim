@@ -1,6 +1,5 @@
 import random
 
-import pygame
 
 from behaviors.forage import Forage
 from behaviors.graze import Graze
@@ -23,6 +22,7 @@ class Pteranodon(Dinosaur):
     color = (120, 200, 210)  # 하늘빛 — 지상 개체와 대비
     size = 11
     level = 3  # 초식(1)·포식(2) 위에 그려진다(나는 존재)
+    sprite_name = "pteranodon"
     max_energy = 100.0
     drain_rate = 3.5  # 비행 비용 — 높은 대사로 개체수 자기 제한
     speed = 100.0  # 빠른 비행
@@ -78,23 +78,3 @@ class Pteranodon(Dinosaur):
 
     def behaviors(self):
         return self._behaviors
-
-    def sprite(self) -> pygame.Surface:
-        # 전진(+x) 방향 갈매기 실루엣 — 두 날개가 뒤로 젖혀진 형태. velocity로 회전해 난다.
-        frac = min(1.0, 0.4 + 0.6 * (self.age / self.maturity_age))
-        ln = max(6, int(self.size * 1.8 * frac))  # 앞뒤 길이
-        sw = max(5, int(self.size * 1.4 * frac))  # 날개 폭(반)
-        body = self.color
-        dark = (int(body[0] * 0.6), int(body[1] * 0.6), int(body[2] * 0.6))
-        surf = pygame.Surface((ln, 2 * sw), pygame.SRCALPHA)
-        cy = sw
-        # 앞쪽 머리(오른쪽) → 양 날개가 뒤(왼쪽)로 젖혀진 화살형 + 가운데 노치
-        pygame.draw.polygon(
-            surf,
-            body,
-            [(ln - 1, cy), (0, 0), (int(ln * 0.45), cy), (0, 2 * sw - 1)],
-        )
-        pygame.draw.line(surf, dark, (int(ln * 0.45), cy), (ln - 1, cy), 1)  # 몸통선
-        if self.velocity.length_squared() > 0.01:
-            surf = pygame.transform.rotate(surf, -self.velocity.as_polar()[1])
-        return surf
