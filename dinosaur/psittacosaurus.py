@@ -20,7 +20,9 @@ class Psittacosaurus(Dinosaur):
     speed = 60.0  # px/s
     flee_speed = 80.0  # 도주 속도 — 포식자(90)보다 살짝 느려 추격은 가능하되 비용이 큼
     flee_radius = 120.0  # 단독 감지 반경(무리면 vigilance로 더 멀리)
-    vigilance_bonus = 0.0  # 0=집단경계 비활성(무리를 꺼서 불필요). >0이면 many-eyes 활성
+    vigilance_bonus = (
+        0.0  # 0=집단경계 비활성(무리를 꺼서 불필요). >0이면 many-eyes 활성
+    )
     vigilance_cap = 3  # 최대 가산 동족 수(vigilance_bonus>0일 때만 의미)
     eat_distance = 40.0
     seek_distance = 150.0  # 이 반경의 풀을 향해 이동(Forage)
