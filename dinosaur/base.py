@@ -6,6 +6,7 @@ import pygame
 import sprites
 from actions.age import Age
 from actions.drain_energy import DrainEnergy
+from actions.drain_water import DrainWater
 from entity import Entity, EntityStatus
 
 if TYPE_CHECKING:
@@ -34,6 +35,15 @@ class Dinosaur(Entity):
     maturity_age: float = 15.0  # 이 나이 이상이어야 번식 가능(미성숙은 작게 렌더)
     senescence_age: float = 120.0  # 이 나이부터 노화사(확률적) 시작
     mortality_rate: float = 0.02  # 노쇠기 진입 후 초당 사망 확률(hazard)
+    # 수분(목마름) — 에너지의 쌍둥이 드라이브. 완만하게(물 풍부·빠른 회복) 둬 탈수가 대량
+    # 사망이 아니라 '물 찾기 행동'을 유발하게 한다. 0이 되면 탈수 스트레스로 에너지만 깎인다.
+    max_water: float = 100.0
+    drain_water_rate: float = 1.8  # 수분/초 감소(≈55초에 고갈)
+    thirst_threshold: float = 45.0  # 이 미만이면 물을 찾아 나선다(SeekWater)
+    drink_rate: float = 70.0  # 물가에서 수분/초 회복(빠른 보충)
+    drink_distance: float = 52.0  # 이 거리 안의 물을 마실 수 있다(Drink)
+    water_sight: float = 220.0  # 이 반경의 물을 감지(SeekWater)
+    dehydration_stress: float = 3.0  # 수분 0일 때 추가 에너지/초(완만)
 
     def __init__(self, loc: pygame.Vector2, rng: random.Random | None = None):
         self.loc = pygame.Vector2(loc)
@@ -41,6 +51,7 @@ class Dinosaur(Entity):
             0, 0
         )  # 직전 틱 이동 변위(set_location이 갱신). boids 정렬용.
         self.energy = self.max_energy / 2  # 절반에서 시작(처음엔 배고픔)
+        self.water = self.max_water  # 수분 가득(수화 상태로 시작)
         self.age = 0.0
         self.last_breed_age = -1.0e9  # 마지막 번식 시점(나이). 번식 쿨다운 계산용.
         self._rng = rng or random.Random()  # 노화사 판정용 전용 스트림(순서 독립)
@@ -50,6 +61,8 @@ class Dinosaur(Entity):
 
     def passive_actions(self, dt: float) -> list["Action"]:
         return [
+            # 수분 먼저: 탈수 스트레스가 같은 틱 DrainEnergy의 사망 판정에 반영되도록.
+            DrainWater(self, self.drain_water_rate * dt, self.dehydration_stress * dt),
             DrainEnergy(self, self.drain_rate * dt),
             Age(self, dt, self.senescence_age, self.mortality_rate, self._rng),
         ]

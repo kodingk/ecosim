@@ -1,10 +1,13 @@
 import random
 
+from behaviors.drink import Drink
 from behaviors.hunt import Hunt
 from behaviors.reproduce import Reproduce
+from behaviors.seek_water import SeekWater
 from behaviors.wander import Wander
 from dinosaur.base import Dinosaur
 from dinosaur.psittacosaurus import Psittacosaurus
+from water.base import Water
 
 
 class Deinonychus(Dinosaur):
@@ -35,6 +38,10 @@ class Deinonychus(Dinosaur):
     reproduce_radius = 25.0
     breed_cooldown = 50.0  # 번식 후 휴지기(초) — 출생률 하드캡으로 boom 차단
     breed_territory = 250.0  # 이 반경 내 동족 있으면 번식 안 함(영역성 → 밀도 캡)
+    # 수분: 포식자는 넓게 배회하므로 더 가뭄에 강하게(큰 리저브·낮은 임계·먼 시야).
+    max_water = 120.0
+    thirst_threshold = 35.0
+    water_sight = 280.0
 
     def __init__(self, loc, rng: random.Random):
         senesce_rng = random.Random(rng.random())
@@ -42,8 +49,17 @@ class Deinonychus(Dinosaur):
         repr_rng = random.Random(rng.random())
         wander_rng = random.Random(rng.random())
         child_src = random.Random(rng.random())
-        # 우선순위: 사냥 > 번식 > 배회
+        # 우선순위: 물(마시기·찾기) > 사냥 > 번식 > 배회 (물은 게이트라 평소엔 사냥에 양보)
         self._behaviors = [
+            Drink(self, Water, self.drink_distance, self.drink_rate),
+            SeekWater(
+                self,
+                Water,
+                self.water_sight,
+                self.drink_distance,
+                self.speed,
+                self.thirst_threshold,
+            ),
             Hunt(
                 actor=self,
                 target_classes=[Psittacosaurus],

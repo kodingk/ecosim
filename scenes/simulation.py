@@ -11,6 +11,8 @@ from overlays.hud import Hud
 from overlays.population_graph import PopulationGraph
 from plant.base import Plant
 from scene import Scene
+from terrain import make_ground
+from water.base import Water
 from world import World
 
 
@@ -29,6 +31,7 @@ class SimulationScene(Scene):
         self._app = app
         self.world = World(size=app.size)
         self.telemetry = Telemetry()
+        self._ground = make_ground(app.size)  # 절차적 땅 배경(1회 생성·캐시)
 
         self._font = pygame.font.Font(None, 22)
         self._small = pygame.font.Font(None, 18)
@@ -70,6 +73,10 @@ class SimulationScene(Scene):
             self.world.spawn(Deinonychus.gen(size, random.Random(master.random())))
         for _ in range(12):
             self.world.spawn(Pteranodon.gen(size, random.Random(master.random())))
+        # 식수원(연못) — 고정 위치로 흩어 배치해 어디서든 물이 가깝게(완만한 목마름). master
+        # rng를 쓰지 않아 위 식물·동물 배치 시퀀스를 보존한다(검증된 생태계 그대로 + 목마름만 추가).
+        for fx, fy in ((0.25, 0.28), (0.74, 0.30), (0.30, 0.76), (0.72, 0.72)):
+            self.world.spawn(Water(pygame.Vector2(fx * size[0], fy * size[1])))
 
     # --- 명령(키 콜백) ---------------------------------------------------------
     def _toggle_pause(self) -> None:
@@ -116,7 +123,7 @@ class SimulationScene(Scene):
             self._accum = 0.0
 
     def render(self, screen: pygame.Surface) -> None:
-        screen.fill((18, 20, 16))
+        screen.blit(self._ground, (0, 0))  # 단색 대신 절차적 땅 배경
         for entity in self.world.entities:
             sprite = entity.sprite()
             screen.blit(sprite, sprite.get_rect(center=entity.status.loc))

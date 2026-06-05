@@ -146,11 +146,26 @@ def plant():
     return surf
 
 
+def water():
+    """잔잔한 연못(탑다운). 방향성이 없어 런타임에 회전하지 않는다."""
+    surf = canvas()
+    # 젖은 가장자리(진흙 링) → 깊은 물 → 중간 물 → 하늘 반사 하이라이트
+    pygame.draw.ellipse(surf, (44, 60, 60), (3, 8, 58, 48))
+    pygame.draw.ellipse(surf, (36, 92, 120), (6, 11, 52, 42))
+    pygame.draw.ellipse(surf, (52, 120, 150), (11, 15, 42, 32))
+    pygame.draw.ellipse(surf, (120, 180, 200), (19, 18, 24, 15))
+    # 잔물결
+    pygame.draw.arc(surf, (150, 205, 220), (20, 27, 22, 10), 3.6, 5.9, 1)
+    pygame.draw.arc(surf, (90, 150, 178), (13, 21, 36, 20), 3.4, 6.0, 1)
+    return surf
+
+
 SPRITES = {
     "deinonychus": deinonychus,
     "psittacosaurus": psittacosaurus,
     "pteranodon": pteranodon,
     "plant": plant,
+    "water": water,
 }
 
 for name, fn in SPRITES.items():

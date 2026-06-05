@@ -1,13 +1,16 @@
 import random
 
+from behaviors.drink import Drink
 from behaviors.flee import Flee
 from behaviors.flock import Flock
 from behaviors.forage import Forage
 from behaviors.graze import Graze
 from behaviors.reproduce import Reproduce
+from behaviors.seek_water import SeekWater
 from behaviors.wander import Wander
 from dinosaur.base import Dinosaur
 from plant.base import Plant
+from water.base import Water
 
 
 class Psittacosaurus(Dinosaur):
@@ -50,8 +53,8 @@ class Psittacosaurus(Dinosaur):
         repr_rng = random.Random(rng.random())
         wander_rng = random.Random(rng.random())
         child_src = random.Random(rng.random())
-        # 우선순위: 도주 > 풀뜯기 > 먹이탐색 > 번식 > 무리 > 배회
-        # Forage(분산)가 Flock(응집)보다 위라, 배고프면 풀 찾아 흩어지고 배부르면 무리로 합류한다.
+        # 우선순위: 도주 > 물(마시기·찾기) > 풀뜯기 > 먹이탐색 > 번식 > 무리 > 배회
+        # 생존 위협(포식자)만 물보다 위. 물 한 쌍은 게이트(목마를 때만)라 평소엔 섭식에 양보한다.
         # (Deinonychus는 import 시 순환을 피하려 지역 import)
         from dinosaur.deinonychus import Deinonychus
 
@@ -64,6 +67,15 @@ class Psittacosaurus(Dinosaur):
                 vigilance_radius=self.herd_radius,
                 vigilance_bonus=self.vigilance_bonus,
                 vigilance_cap=self.vigilance_cap,
+            ),
+            Drink(self, Water, self.drink_distance, self.drink_rate),
+            SeekWater(
+                self,
+                Water,
+                self.water_sight,
+                self.drink_distance,
+                self.speed,
+                self.thirst_threshold,
             ),
             Graze(
                 self, Plant, self.eat_distance, self.graze_rate, self.graze_min_biomass
