@@ -5,6 +5,7 @@ from behavior import Behavior
 
 if TYPE_CHECKING:
     from action import Action
+    from dinosaur.base import Dinosaur
     from entity import Entity
     from world import WorldSnapshot
 
@@ -25,7 +26,7 @@ class Forage(Behavior):
 
     def __init__(
         self,
-        actor: "Entity",
+        actor: "Dinosaur",
         plant_class: type["Entity"] | tuple[type["Entity"], ...],
         seek_distance: float,
         eat_distance: float,

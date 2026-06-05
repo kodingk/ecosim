@@ -1,9 +1,15 @@
 import abc
+import random
 from collections import deque
+from typing import TYPE_CHECKING
 
 import pygame
 
 from entity import Entity, EntityStatus
+
+if TYPE_CHECKING:
+    from behavior import Behavior
+    from world import World
 
 
 class Overlay(Entity):
@@ -29,11 +35,11 @@ class Overlay(Entity):
         return pygame.Vector2(self._anchor)
 
     # --- Entity 계약: 오버레이는 시뮬레이션에 참여하지 않으므로 비활성 -------------------
-    def behaviors(self):
+    def behaviors(self) -> list["Behavior"]:
         return []
 
     @classmethod
-    def gen(cls, world_size, rng):
+    def gen(cls, world_size: tuple[int, int], rng: random.Random) -> "Entity":
         raise NotImplementedError(
             "Overlay는 월드에 spawn되지 않는다(Simulator가 보유한다)."
         )
@@ -71,7 +77,7 @@ class Telemetry:
         self.levels: dict[str, int] = {}
         self.history: dict[str, deque[int]] = {}  # 종 → 카운트 시계열
 
-    def sample(self, world, dt: float) -> None:
+    def sample(self, world: "World", dt: float) -> None:
         self.elapsed += dt
         counts: dict[str, int] = {}
         biomass = 0.0

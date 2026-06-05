@@ -2,7 +2,7 @@ import abc
 import dataclasses
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pygame
 
@@ -23,7 +23,7 @@ class EntityStatus:
     velocity: pygame.Vector2 = field(default_factory=lambda: pygame.Vector2(0, 0))
     """직전 틱의 이동 변위(방향+크기). boids 정렬·요격 등에 쓰인다. 정지·식물은 0."""
 
-    def replace(self, **kwargs) -> "EntityStatus":
+    def replace(self, **kwargs: Any) -> "EntityStatus":
         return dataclasses.replace(self, **kwargs)
 
 

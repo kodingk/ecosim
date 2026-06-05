@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from actions.bite import Bite
 from behavior import Behavior
@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from action import Action
     from dinosaur.base import Dinosaur
     from entity import Entity
+    from plant.base import Plant
     from world import WorldSnapshot
 
 
@@ -49,5 +50,5 @@ class Graze(Behavior):
                 isinstance(entity, self._plant_class)
                 and getattr(entity, "biomass", 0.0) > self._min_biomass
             ):
-                return Bite(self._actor, entity, self._graze_rate * dt)
+                return Bite(self._actor, cast("Plant", entity), self._graze_rate * dt)
         return None

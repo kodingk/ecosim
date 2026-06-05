@@ -1,5 +1,8 @@
 import random
 
+import pygame
+
+from behavior import Behavior
 from behaviors.drink import Drink
 from behaviors.hunt import Hunt
 from behaviors.reproduce import Reproduce
@@ -43,14 +46,14 @@ class Deinonychus(Dinosaur):
     thirst_threshold = 35.0
     water_sight = 280.0
 
-    def __init__(self, loc, rng: random.Random):
+    def __init__(self, loc: pygame.Vector2, rng: random.Random):
         senesce_rng = random.Random(rng.random())
         super().__init__(loc, senesce_rng)
         repr_rng = random.Random(rng.random())
         wander_rng = random.Random(rng.random())
         child_src = random.Random(rng.random())
         # 우선순위: 물(마시기·찾기) > 사냥 > 번식 > 배회 (물은 게이트라 평소엔 사냥에 양보)
-        self._behaviors = [
+        self._behaviors: list[Behavior] = [
             Drink(self, Water, self.drink_distance, self.drink_rate),
             SeekWater(
                 self,

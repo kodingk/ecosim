@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pygame
 
 from keybindings import KeyBindings
 from scene import Scene
+
+if TYPE_CHECKING:
+    from simulator import Simulator
 
 
 class TitleScene(Scene):
@@ -15,7 +20,7 @@ class TitleScene(Scene):
         ((120, 200, 210), "Pteranodon"),
     ]
 
-    def __init__(self, app):
+    def __init__(self, app: "Simulator"):
         self._app = app
         self._title_font = pygame.font.Font(None, 76)
         self._font = pygame.font.Font(None, 30)

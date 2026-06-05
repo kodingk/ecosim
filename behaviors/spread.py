@@ -8,7 +8,10 @@ from actions.spawn import Spawn
 from behavior import Behavior
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from action import Action
+    from entity import Entity
     from world import WorldSnapshot
 
 
@@ -23,13 +26,13 @@ class Spread(Behavior):
 
     def __init__(
         self,
-        plant,
+        plant: "Entity",
         rng: random.Random,
         rate: float,
         radius: float,
         max_plants: int,
-        plant_class: type,
-        factory,  # Callable[[pygame.Vector2], Entity]
+        plant_class: "type[Entity]",
+        factory: "Callable[[pygame.Vector2], Entity]",
         world_size: tuple[int, int] | None = None,
         min_biomass: float = 0.0,
     ):

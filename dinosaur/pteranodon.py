@@ -1,6 +1,8 @@
 import random
 
+import pygame
 
+from behavior import Behavior
 from behaviors.drink import Drink
 from behaviors.forage import Forage
 from behaviors.graze import Graze
@@ -46,14 +48,14 @@ class Pteranodon(Dinosaur):
     reproduce_cost = 55.0
     reproduce_radius = 25.0
 
-    def __init__(self, loc, rng: random.Random):
+    def __init__(self, loc: pygame.Vector2, rng: random.Random):
         senesce_rng = random.Random(rng.random())
         super().__init__(loc, senesce_rng)
         repr_rng = random.Random(rng.random())
         wander_rng = random.Random(rng.random())
         child_src = random.Random(rng.random())
         # 우선순위: 물(마시기·찾기) > 풀뜯기 > 먹이탐색 > 번식 > 배회 (포식자가 무시 → 도주 없음)
-        self._behaviors = [
+        self._behaviors: list[Behavior] = [
             Drink(self, Water, self.drink_distance, self.drink_rate),
             SeekWater(
                 self,

@@ -38,12 +38,14 @@ class Simulator:
         self.running = True
         while self.running:
             dt = self.clock.tick(self.fps) / 1000
+            current = self._scene
+            assert current is not None  # switch가 루프 진입 전 항상 설정한다
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
                 else:
-                    self._scene.handle_event(event)
-            self._scene.update(dt)
-            self._scene.render(self.screen)
+                    current.handle_event(event)
+            current.update(dt)
+            current.render(self.screen)
             pygame.display.flip()
         pygame.quit()

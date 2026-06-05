@@ -1,4 +1,5 @@
 import random
+from typing import TYPE_CHECKING
 
 import pygame
 
@@ -6,7 +7,7 @@ from dinosaur.deinonychus import Deinonychus
 from dinosaur.psittacosaurus import Psittacosaurus
 from dinosaur.pteranodon import Pteranodon
 from keybindings import KeyBindings
-from overlay import Telemetry
+from overlay import Overlay, Telemetry
 from overlays.hud import Hud
 from overlays.population_graph import PopulationGraph
 from plant.base import Plant
@@ -14,6 +15,9 @@ from scene import Scene
 from terrain import make_ground
 from water.base import Water
 from world import World
+
+if TYPE_CHECKING:
+    from simulator import Simulator
 
 
 class SimulationScene(Scene):
@@ -27,7 +31,7 @@ class SimulationScene(Scene):
     FIXED_DT = 1 / 60
     MAX_SUBSTEPS = 10  # 프레임당 최대 서브스텝(나선 방지)
 
-    def __init__(self, app, seed: int = 42):
+    def __init__(self, app: "Simulator", seed: int = 42):
         self._app = app
         self.world = World(size=app.size)
         self.telemetry = Telemetry()
@@ -37,7 +41,7 @@ class SimulationScene(Scene):
         self._small = pygame.font.Font(None, 18)
         self._hud = Hud(self.telemetry, self._font, self._small)
         self._graph = PopulationGraph(self.telemetry, self._small, app.size)
-        self.overlays = [self._hud, self._graph]
+        self.overlays: list[Overlay] = [self._hud, self._graph]
 
         self._speed = 1.0
         self._paused = False
@@ -90,7 +94,7 @@ class SimulationScene(Scene):
         self._speed = speed
         self._paused = False
 
-    def _toggle(self, overlay) -> None:
+    def _toggle(self, overlay: Overlay) -> None:
         overlay.visible = not overlay.visible
 
     def _toggle_help(self) -> None:
@@ -109,11 +113,11 @@ class SimulationScene(Scene):
         self.world.update(dt)
         self.telemetry.sample(self.world, dt)
 
-    def update(self, frame_dt: float) -> None:
+    def update(self, dt: float) -> None:
         if self._paused:
             return
         # 고정 timestep accumulator: 배속이어도 per-tick 동역학 보존.
-        self._accum += frame_dt * self._speed
+        self._accum += dt * self._speed
         steps = 0
         while self._accum >= self.FIXED_DT and steps < self.MAX_SUBSTEPS:
             self._advance(self.FIXED_DT)

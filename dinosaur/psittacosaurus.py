@@ -1,5 +1,8 @@
 import random
 
+import pygame
+
+from behavior import Behavior
 from behaviors.drink import Drink
 from behaviors.flee import Flee
 from behaviors.flock import Flock
@@ -47,7 +50,7 @@ class Psittacosaurus(Dinosaur):
     reproduce_cost = 50.0
     reproduce_radius = 20.0
 
-    def __init__(self, loc, rng: random.Random):
+    def __init__(self, loc: pygame.Vector2, rng: random.Random):
         senesce_rng = random.Random(rng.random())
         super().__init__(loc, senesce_rng)
         repr_rng = random.Random(rng.random())
@@ -58,7 +61,7 @@ class Psittacosaurus(Dinosaur):
         # (Deinonychus는 import 시 순환을 피하려 지역 import)
         from dinosaur.deinonychus import Deinonychus
 
-        self._behaviors = [
+        self._behaviors: list[Behavior] = [
             Flee(
                 self,
                 Deinonychus,

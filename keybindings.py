@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pygame
 
 
@@ -10,11 +12,11 @@ class KeyBindings:
     있다(도움말 오버레이도 이 목록에서 자동 생성).
     """
 
-    def __init__(self):
-        self._bindings: dict[int, tuple[str, callable]] = {}
+    def __init__(self) -> None:
+        self._bindings: dict[int, tuple[str, Callable[[], object]]] = {}
         self._order: list[int] = []  # 표시 순서(등록 순)
 
-    def bind(self, key: int, label: str, callback) -> None:
+    def bind(self, key: int, label: str, callback: Callable[[], object]) -> None:
         if key not in self._bindings:
             self._order.append(key)
         self._bindings[key] = (label, callback)

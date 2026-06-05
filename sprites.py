@@ -4,7 +4,7 @@ import pygame
 
 _DIR = os.path.join(os.path.dirname(__file__), "assets", "sprites")
 _base_cache: dict[str, pygame.Surface] = {}
-_xform_cache: dict[tuple, pygame.Surface] = {}
+_xform_cache: dict[tuple[str, int, int, float], pygame.Surface] = {}
 
 
 def _base(name: str) -> pygame.Surface:

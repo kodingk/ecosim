@@ -8,8 +8,11 @@ from actions.spawn_offspring import SpawnOffspring
 from behavior import Behavior
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from action import Action
     from dinosaur.base import Dinosaur
+    from entity import Entity
     from world import WorldSnapshot
 
 
@@ -34,11 +37,11 @@ class Reproduce(Behavior):
         cost: float,
         radius: float,
         rng: random.Random,
-        factory,  # Callable[[pygame.Vector2], Entity]
+        factory: "Callable[[pygame.Vector2], Entity]",
         maturity_age: float = 0.0,
         cooldown: float = 0.0,
         crowd_radius: float = 0.0,
-        food_class: type | None = None,
+        food_class: "type[Entity] | None" = None,
         min_food_ratio: float = 0.0,
         max_own_count: int = 0,
     ):

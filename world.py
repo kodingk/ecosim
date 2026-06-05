@@ -1,6 +1,6 @@
 import bisect
 import itertools
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from action import Action
 from entity import Entity, EntityStatus
@@ -13,13 +13,17 @@ class WorldSnapshot:
 
     statuses: dict[Entity, EntityStatus]
     cell_size: float = 100.0  # 공간 해시 격자 칸 크기(이웃 쿼리 가속)
+    # 파생 가속 구조 — __post_init__에서 object.__setattr__로 채운다(frozen 우회). init=False라
+    # 생성 인자에 들어가지 않고, 선언만으로 pyright가 속성을 인지한다(접근 에러 방지).
+    _grid: SpatialGrid[Entity] = field(init=False, repr=False, compare=False)
+    _counts: dict[type[Entity], int] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         # 틱-시작 위치로 공간 해시를, 동시에 타입별 개수를 1회 빌드한다 — 이웃 쿼리와 전역
         # 개수 조회를 둘 다 O(n)→평균 O(1)로. frozen이라 object.__setattr__로 파생 가속
         # 구조를 심는다(불변 계약 유지).
-        grid = SpatialGrid(self.cell_size)
-        counts: dict[type, int] = {}
+        grid: SpatialGrid[Entity] = SpatialGrid(self.cell_size)
+        counts: dict[type[Entity], int] = {}
         for entity, status in self.statuses.items():
             grid.insert(entity, status.loc)
             t = type(entity)
@@ -27,11 +31,11 @@ class WorldSnapshot:
         object.__setattr__(self, "_grid", grid)
         object.__setattr__(self, "_counts", counts)
 
-    def count(self, cls: type) -> int:
+    def count(self, cls: type[Entity]) -> int:
         """cls(및 하위 클래스) 인스턴스 수 — isinstance 의미. 캐시로 O(타입 수)≈O(1)."""
         return sum(n for t, n in self._counts.items() if issubclass(t, cls))
 
-    def count_exact(self, cls: type) -> int:
+    def count_exact(self, cls: type[Entity]) -> int:
         """정확히 cls 타입인 인스턴스 수(하위 클래스 제외)."""
         return self._counts.get(cls, 0)
 
@@ -44,7 +48,7 @@ class WorldSnapshot:
         훑던 O(n)을 평균 O(1)로 줄인다(결과 집합·순서는 전수 검사와 동일).
         """
         origin = self.statuses[actor].loc
-        found = []
+        found: list[tuple[float, Entity]] = []
         for entity in self._grid.nearby(origin, distance):
             if entity is actor:
                 continue
