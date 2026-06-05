@@ -12,7 +12,11 @@ def make_ground(size: tuple[int, int], seed: int = 7) -> pygame.Surface:
     시드를 써 실행마다 같은 지면이 나온다. (물·생물은 Entity라 이 위에 얹혀 그려진다.)
     """
     w, h = size
-    surf = pygame.Surface((w, h))
+    # 24비트(알파 채널 없음)로 만든다. 32비트로 두면 cocoa(macOS) 등 디스플레이 포맷에 알파
+    # 채널이 있어, 아래 SRCALPHA 얼룩 레이어를 blit하는 순간 배경 surface의 알파가 0으로
+    # 오염된다 → 화면에 투명하게 깔려 땅이 안 보이고 생물만 검은 배경 위에 뜬 것처럼 보인다.
+    # 알파 채널이 아예 없으면 오염될 것이 없어 항상 불투명하게 칠해진다.
+    surf = pygame.Surface((w, h), 0, 24)
     surf.fill((44, 52, 38))  # 기본 이끼낀 흙색
     rng = random.Random(seed)
     palette = [
