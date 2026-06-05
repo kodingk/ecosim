@@ -42,6 +42,7 @@ class Hunt(Behavior):
         max_chase: float = 8.0,
         rest_duration: float = 3.0,
         pack_radius: float = 0.0,
+        vision_floor: float = 1.0,
     ):
         self._actor = actor
         self._target_classes = tuple(target_classes)
@@ -56,6 +57,8 @@ class Hunt(Behavior):
         # >0이면 '협동 사냥': 이 반경 내 동족(팩)의 무게중심에 가장 가까운 먹이를 공유 표적으로
         # 삼는다 → 팩원들이 같은 먹이에 수렴해 도주 prey를 자연 포위한다. 0이면 단독(최근접).
         self._pack_radius = pack_radius
+        # 야간 시야: 어두울 때 시야 배율 하한(1.0=낮밤 무관, 0.7=한밤에 70%). cathemeral 포식자용.
+        self._vision_floor = vision_floor
         self._chase_time = 0.0
         self._rest_time = 0.0
 
@@ -75,9 +78,13 @@ class Hunt(Behavior):
             self._chase_time = 0.0
             return None
         actor_loc = snapshot.statuses[self._actor].loc
+        # 야간 시야: 어두울수록 시야가 준다(vision_floor가 하한). cathemeral이면 이 시야로 밤에도 사냥.
+        sight = self._sight * (
+            self._vision_floor + (1.0 - self._vision_floor) * snapshot.daylight
+        )
         prey_in_sight = [
             e
-            for e in snapshot.query_entities_within(self._actor, self._sight)
+            for e in snapshot.query_entities_within(self._actor, sight)
             if isinstance(e, self._target_classes)
         ]
         if not prey_in_sight:

@@ -10,6 +10,7 @@ from behavior import Behavior
 
 if TYPE_CHECKING:
     from action import Action
+    from world import WorldSnapshot
 
 
 @dataclass(frozen=True)
@@ -69,8 +70,9 @@ class Entity(abc.ABC):
         초기 조건 설정(Simulator 스폰)에 사용된다.
         """
 
-    def passive_actions(self, dt: float) -> list["Action"]:
-        """매 틱 항상 수집되는 수동 행동들 (에너지 소모·노화 등). 기본값은 빈 리스트."""
+    def passive_actions(self, dt: float, snapshot: "WorldSnapshot") -> list["Action"]:
+        """매 틱 항상 수집되는 수동 행동들 (에너지 소모·노화 등). snapshot으로 낮밤 등
+        틱-전역 상태를 읽을 수 있다. 기본값은 빈 리스트."""
         return []
 
     # ================================================================================

@@ -11,6 +11,7 @@ from entity import Entity, EntityStatus
 if TYPE_CHECKING:
     from action import Action
     from behavior import Behavior
+    from world import WorldSnapshot
 
 
 class Plant(Entity):
@@ -33,7 +34,9 @@ class Plant(Entity):
     spread_radius: float = 150.0  # 넓은 반경으로 지역 고갈 완화
     max_plants: int = 150  # 월드 내 식물 개체 상한
     max_biomass: float = 20.0  # 포기당 최대 현존량(= 초식자가 뜯어갈 수 있는 에너지)
-    regrow_rate: float = 1.3  # biomass/초 회복 — 초식자(psitta+익룡) 부양력 결정
+    # biomass/초 회복(광합성). 낮·밤에서 daylight를 곱하면 사이클 평균이 절반이 되므로,
+    # 평균 공급을 종전(≈1.3)과 맞추려 약 2배로 둔다 — 낮에 몰리되 총 부양력은 보존.
+    regrow_rate: float = 2.6
     spread_min_biomass: float = 10.0  # 이 이상 건강할 때만 번식(과방목 시 확산 정지)
 
     def __init__(
@@ -61,9 +64,9 @@ class Plant(Entity):
     def behaviors(self) -> list["Behavior"]:
         return [self._spread]
 
-    def passive_actions(self, dt: float) -> list["Action"]:
-        # 매 틱 일정량 회복 — 판단 체인과 독립인 수동 행동.
-        return [Regrow(self, self.regrow_rate * dt)]
+    def passive_actions(self, dt: float, snapshot: "WorldSnapshot") -> list["Action"]:
+        # 광합성: daylight에 비례해 회복(낮엔 빠르게, 한밤엔 정지). 판단 체인과 독립.
+        return [Regrow(self, self.regrow_rate * snapshot.daylight * dt)]
 
     @property
     def status(self) -> EntityStatus:

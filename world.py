@@ -3,6 +3,7 @@ import itertools
 from dataclasses import dataclass, field
 
 from action import Action
+from daynight import DayNightCycle
 from entity import Entity, EntityStatus
 from spatial import SpatialGrid
 
@@ -13,6 +14,7 @@ class WorldSnapshot:
 
     statuses: dict[Entity, EntityStatus]
     cell_size: float = 100.0  # 공간 해시 격자 칸 크기(이웃 쿼리 가속)
+    daylight: float = 1.0  # 0=한밤, 1=정오. behavior·passive가 낮밤 효과 판단에 읽는다.
     # 파생 가속 구조 — __post_init__에서 object.__setattr__로 채운다(frozen 우회). init=False라
     # 생성 인자에 들어가지 않고, 선언만으로 pyright가 속성을 인지한다(접근 에러 방지).
     _grid: SpatialGrid[Entity] = field(init=False, repr=False, compare=False)
@@ -67,6 +69,9 @@ class World:
         # 주의: level은 spawn 시 정렬 키로 굳으므로, 런타임에 바뀌면 re-spawn해야 순서가 맞다.
         self._entities: list[tuple[int, int, Entity]] = []
         self._counter = itertools.count()
+        self._daynight = (
+            DayNightCycle()
+        )  # 낮·밤 시계(update에서 전진, snapshot에 daylight 스탬프)
 
     @property
     def entities(self) -> list[Entity]:
@@ -75,6 +80,11 @@ class World:
         이미 정렬돼 있어 매번 정렬하지 않고 추출만 한다 — 낮은 level이 앞.
         """
         return [entity for _, _, entity in self._entities]
+
+    @property
+    def daylight(self) -> float:
+        """현재 일조도 [0,1] (0=한밤, 1=정오) — 뷰(밤 틴트)가 읽는다."""
+        return self._daynight.daylight
 
     def spawn(self, entity: Entity):
         # 정렬을 유지하도록 level 위치에 삽입한다 (O(log n) 탐색 + O(n) 시프트).
@@ -89,7 +99,8 @@ class World:
     def snapshot(self) -> WorldSnapshot:
         """현재 모든 엔티티의 상태를 떠 읽기 전용 스냅샷을 만든다."""
         return WorldSnapshot(
-            statuses={entity: entity.status for _, _, entity in self._entities}
+            statuses={entity: entity.status for _, _, entity in self._entities},
+            daylight=self._daynight.daylight,
         )
 
     def update(self, dt: float):
@@ -100,12 +111,13 @@ class World:
            월드를 변경하지 않으므로 처리 순서에 결과가 좌우되지 않는다.
         2) 적용: 충돌(같은 대상 독점)을 해결한 뒤 Action들을 월드에 반영한다.
         """
+        self._daynight.advance(dt)  # 시계 전진 → 이 틱 snapshot.daylight에 반영
         snapshot = self.snapshot()
         actions: list[Action] = []
 
-        # passive: 항상 수집 (에너지 소모 등) — behavior 선택과 독립
+        # passive: 항상 수집 (에너지 소모 등) — behavior 선택과 독립. snapshot으로 daylight 전달.
         for _, _, entity in self._entities:
-            actions.extend(entity.passive_actions(dt))
+            actions.extend(entity.passive_actions(dt, snapshot))
 
         # active: 엔티티당 첫 non-None 하나
         for _, _, entity in self._entities:

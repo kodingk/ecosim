@@ -12,6 +12,7 @@ from entity import Entity, EntityStatus
 if TYPE_CHECKING:
     from action import Action
     from behavior import Behavior
+    from world import WorldSnapshot
 
 
 class Dinosaur(Entity):
@@ -44,6 +45,10 @@ class Dinosaur(Entity):
     drink_distance: float = 52.0  # 이 거리 안의 물을 마실 수 있다(Drink)
     water_sight: float = 220.0  # 이 반경의 물을 감지(SeekWater)
     dehydration_stress: float = 3.0  # 수분 0일 때 추가 에너지/초(완만)
+    # 낮·밤 — 완만. 주행성 기본(activity=daylight). 비활동기엔 Rest로 휴면 + 대사 절감.
+    rest_metabolism: float = 0.5  # 완전 휴식 시 에너지 drain 배율(밤=0.5배로 보존)
+    night_thirst: float = 0.4  # 한밤 갈증 배율(밤엔 기온 낮아 덜 마름)
+    rest_threshold: float = 0.35  # activity가 이 미만이면 Rest가 휴면시킨다
 
     def __init__(self, loc: pygame.Vector2, rng: random.Random | None = None):
         self.loc = pygame.Vector2(loc)
@@ -59,11 +64,22 @@ class Dinosaur(Entity):
     def behaviors(self) -> list["Behavior"]:
         return []
 
-    def passive_actions(self, dt: float) -> list["Action"]:
+    def activity(self, daylight: float) -> float:
+        """현재 빛에서의 활동도 [0,1] (1=완전 활동, 0=완전 휴식). 주행성 기본 — 종이
+        오버라이드한다(예: 포식자는 상시 활동 cathemeral → 밤에도 사냥)."""
+        return daylight
+
+    def passive_actions(self, dt: float, snapshot: "WorldSnapshot") -> list["Action"]:
+        # 대사 휴식: 쉴수록(activity 낮음) 에너지 drain 절감. 기온: 한낮일수록 갈증↑.
+        act = self.activity(snapshot.daylight)
+        metabolism = self.rest_metabolism + (1.0 - self.rest_metabolism) * act
+        thirst = self.night_thirst + (1.0 - self.night_thirst) * snapshot.daylight
         return [
             # 수분 먼저: 탈수 스트레스가 같은 틱 DrainEnergy의 사망 판정에 반영되도록.
-            DrainWater(self, self.drain_water_rate * dt, self.dehydration_stress * dt),
-            DrainEnergy(self, self.drain_rate * dt),
+            DrainWater(
+                self, self.drain_water_rate * thirst * dt, self.dehydration_stress * dt
+            ),
+            DrainEnergy(self, self.drain_rate * metabolism * dt),
             Age(self, dt, self.senescence_age, self.mortality_rate, self._rng),
         ]
 

@@ -7,6 +7,7 @@ from behaviors.drink import Drink
 from behaviors.forage import Forage
 from behaviors.graze import Graze
 from behaviors.reproduce import Reproduce
+from behaviors.rest import Rest
 from behaviors.seek_water import SeekWater
 from behaviors.wander import Wander
 from dinosaur.base import Dinosaur
@@ -54,7 +55,7 @@ class Pteranodon(Dinosaur):
         repr_rng = random.Random(rng.random())
         wander_rng = random.Random(rng.random())
         child_src = random.Random(rng.random())
-        # 우선순위: 물(마시기·찾기) > 풀뜯기 > 먹이탐색 > 번식 > 배회 (포식자가 무시 → 도주 없음)
+        # 우선순위: 물(마시기·찾기) > 휴식(밤) > 풀뜯기 > 먹이탐색 > 번식 > 배회 (포식자 무시 → 도주 없음)
         self._behaviors: list[Behavior] = [
             Drink(self, Water, self.drink_distance, self.drink_rate),
             SeekWater(
@@ -65,6 +66,7 @@ class Pteranodon(Dinosaur):
                 self.speed,
                 self.thirst_threshold,
             ),
+            Rest(self, self.rest_threshold),  # 주행성 — 밤엔 휴면
             Graze(
                 self, Plant, self.eat_distance, self.graze_rate, self.graze_min_biomass
             ),

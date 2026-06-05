@@ -45,6 +45,8 @@ class Deinonychus(Dinosaur):
     max_water = 120.0
     thirst_threshold = 35.0
     water_sight = 280.0
+    # 낮·밤: cathemeral(상시 활동) — 밤에도 사냥한다. 야간 시야만 완만히 감소시켜 과포식 방지.
+    vision_floor = 0.7  # 한밤 시야 배율(주간 대비 70%) — '밤 사냥꾼'이되 학살은 막는다
 
     def __init__(self, loc: pygame.Vector2, rng: random.Random):
         senesce_rng = random.Random(rng.random())
@@ -74,6 +76,7 @@ class Deinonychus(Dinosaur):
                 max_chase=self.max_chase,
                 rest_duration=self.rest_duration,
                 pack_radius=self.pack_radius,  # 협동 사냥(공유 표적)
+                vision_floor=self.vision_floor,  # 야간 시야 — 밤에도 사냥(cathemeral)
             ),
             Reproduce(
                 self,
@@ -91,3 +94,6 @@ class Deinonychus(Dinosaur):
 
     def behaviors(self):
         return self._behaviors
+
+    def activity(self, daylight: float) -> float:
+        return 1.0  # cathemeral — 밤에도 사냥하므로 휴면하지 않고 대사도 항시 정상

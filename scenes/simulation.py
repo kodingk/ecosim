@@ -36,6 +36,10 @@ class SimulationScene(Scene):
         self.world = World(size=app.size)
         self.telemetry = Telemetry()
         self._ground = make_ground(app.size)  # 절차적 땅 배경(1회 생성·캐시)
+        # 밤 틴트: 알파 채널 없는 24비트(set_alpha만 써 cocoa 알파 오염 회피). 매 프레임
+        # daylight로 알파를 조절해 생물·땅 위에 덮는다(어두울수록 짙은 남색).
+        self._night = pygame.Surface(app.size, 0, 24)
+        self._night.fill((6, 10, 34))
 
         self._font = pygame.font.Font(None, 22)
         self._small = pygame.font.Font(None, 18)
@@ -131,6 +135,10 @@ class SimulationScene(Scene):
         for entity in self.world.entities:
             sprite = entity.sprite()
             screen.blit(sprite, sprite.get_rect(center=entity.status.loc))
+        darkness = 1.0 - self.world.daylight  # 밤 틴트(생물 위·UI 아래)
+        if darkness > 0.01:
+            self._night.set_alpha(int(165 * darkness))
+            screen.blit(self._night, (0, 0))
         for overlay in self.overlays:
             if overlay.visible:
                 screen.blit(overlay.sprite(), overlay.anchor)
